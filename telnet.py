@@ -69,10 +69,10 @@ commandMap = { "on" : "PO",
 
         # switch inputs:
 	"bd" : "25FN",
-        "dvd" : "04FN",
-        "appleaudio" : "05FN",
+    "dvd" : "04FN",
+    "appleaudio" : "05FN",
 	"amazontv" : "06FN",
-        # "sat" : "06FN",
+    # "sat" : "06FN",
 	"video" : "10FN",
 	"hdmi1" : "19FN",
 	"hdmi2" : "20FN",
@@ -84,20 +84,20 @@ commandMap = { "on" : "PO",
 	"appletv" : "25FN",
 	"hdmi7" : "34FN",
 	"net" : "26FN", # cyclic
-        "tv" : "01FN",
+    "tv" : "01FN",
 	"iradio" : "38FN",
 	"dvr" : "15FN",
-        "radio" : "02FN",
-        "tuner" : "02FN",
-        "phono" : "00FN", # invalid command
+    "radio" : "02FN",
+    "tuner" : "02FN",
+    "phono" : "00FN", # invalid command
 	"hdmi" : "31FN", # cyclic
-        "pandora" : "41FN",
+    "pandora" : "41FN",
 	
 
-        # TODO: could have a pandora mode, radio mode, etc.
+    # TODO: could have a pandora mode, radio mode, etc.
 	# Pandora ones:
-        "start" : "30NW",
-        "next" : "13NW",
+    "start" : "30NW",
+    "next" : "13NW",
 	"pause" : "11NW",
 	"play" : "10NW",
 	"previous" : "12NW",
@@ -107,7 +107,7 @@ commandMap = { "on" : "PO",
 	"random" : "35NW",
 	"menu" : "36NW",
 
-        "info" : "?GAH",
+    "info" : "?GAH",
 	"list" : "?GAI",
 	"top menu" : "19IP",
 
@@ -124,7 +124,8 @@ def print_help():
     # l.sort()
     for x in l:
         print(x)
-
+    print("mode [mode]")
+    print(inverseModeSetMap.keys())
 
 def send(tn, s):
     tn.write(s.encode() + b"\r\n")
@@ -417,16 +418,20 @@ def write_loop(tn):
         sys.stdout.flush()
         send(tn, command) # try original one
 
+
+# TODO: some modes work and some don't
+# document which ones, only include those in help
+
 def change_mode(tn, command):
     l = command.split(" ")
     if len(l) < 2:
         return None
-    modestring = " ".join(l[1:])
+    modestring = " ".join(l[1:]).lower()
     m = inverseModeSetMap.get(modestring, None)
     if m:
         send(tn, m + "SR")
         return True
-    print("Unknown " + command)
+    print("Unknown " + command) # "Unknown mode <mode>" message
     return None
 
 def second_arg(cmd):

@@ -323,75 +323,77 @@ def decodeGeh(s):
 # We really want two threads: one with the output, another with the commands.
 
 def read_loop(tn):
+    """Main read loop"""
     sys.stdout.flush()
     count = 0
     while True:
-      count += 1
-      s = readline(tn)
-      s = s.decode()
-      err = parse_error(s)
-      if err:
-         print(count, "ERROR: ", err)
-         continue
-      tone = decode_tone(s)
-      if tone:
-        print(tone)
-        continue
-      geh = decodeGeh(s)
-      if geh:
-        print(geh)
-        continue
-      # print("s has type", type(s)) # bytes
-      fl = decodeFL(s)
-      if fl:
-        sys.stdout.write("%s\r" % fl)
-        continue
-      if s.startswith('FN'):
-        inputs = inputMap.get(s[2:], "unknown (%s)" % s)
-        print(f"Input is {inputs}")
-        continue
-      if s.startswith('ATW'):
-        print("loudness is "),
-        print("on" if s == "ATW1" else "off")
-        continue
-      if s.startswith('ATC'):
-        print("eq is "),
-        print("on" if s == "ATC1" else "off")
-        continue
-      if s.startswith('ATD'):
-        print("standing wave is "),
-        print("on" if s == "ATD1" else "off")
-        continue
-      if s.startswith('ATE'):
-        num = s[3:]
-        if num >= "00" and num <= "16":
-            print("Phase control: " + num + "ms")
-        else:
-            if num == "97":
-                print("Phase control: AUTO")
-            elif num == "98":
-                print("Phase control: UP")
-            elif num == "99":
-                print("Phase control: DOWN")
-            else:
-                print("Phase control: unknown")
-        continue
-      m = translate_mode(s)
-      if m:
-        print("Listening mode is %s (%s)" % (m, s))
-        continue
-      if s.startswith('AST') and decodeAST(s):
-        continue
-      if s.startswith('SR'):
-        code = s[2:]
-        v = modeSetMap.get(code, None)
-        if v:
-            print("mode is %s (%s)" % (v, s))
+        count += 1
+        s = readline(tn)
+        s = s.decode()
+        err = parse_error(s)
+        if err:
+            print(count, "ERROR: ", err)
             continue
-      # default:
-      print(count, s)
+        tone = decode_tone(s)
+        if tone:
+            print(tone)
+            continue
+        geh = decodeGeh(s)
+        if geh:
+            print(geh)
+            continue
+        # print("s has type", type(s)) # bytes
+        fl = decodeFL(s)
+        if fl:
+            sys.stdout.write("%s\r" % fl)
+            continue
+        if s.startswith('FN'):
+            inputs = inputMap.get(s[2:], "unknown (%s)" % s)
+            print(f"Input is {inputs}")
+            continue
+        if s.startswith('ATW'):
+            print("loudness is ")
+            print("on" if s == "ATW1" else "off")
+            continue
+        if s.startswith('ATC'):
+            print("eq is ")
+            print("on" if s == "ATC1" else "off")
+            continue
+        if s.startswith('ATD'):
+            print("standing wave is ")
+            print("on" if s == "ATD1" else "off")
+            continue
+        if s.startswith('ATE'):
+            num = s[3:]
+            if num >= "00" and num <= "16":
+                print("Phase control: " + num + "ms")
+            else:
+                if num == "97":
+                    print("Phase control: AUTO")
+                elif num == "98":
+                    print("Phase control: UP")
+                elif num == "99":
+                    print("Phase control: DOWN")
+                else:
+                    print("Phase control: unknown")
+            continue
+        m = translate_mode(s)
+        if m:
+            print(f"Listening mode is {m} ({s})")
+            continue
+        if s.startswith('AST') and decodeAST(s):
+            continue
+        if s.startswith('SR'):
+            code = s[2:]
+            v = modeSetMap.get(code, None)
+            if v:
+                print(f"mode is {v} ({s})")
+                continue
+        # default:
+        print(count, s)
 
 def write_loop(tn):
+    """Main write loop"""
     while True:
         command = input("command: ").strip()
         if command in ("quit", "exit"):

@@ -1,17 +1,21 @@
 #!/usr/bin/python3
 
+"""
+Main script for controlling the AVR via telnet.
+"""
+
 import sys
 import telnetlib
-import os
-import time
 import urllib.parse
 import threading
+from optparse import OptionParser
+
 from modes_display import modeDisplayMap
 from modes_set import modeSetMap, inverseModeSetMap
 
-from optparse import OptionParser
 
-# HOST = "10.0.1.32"      
+
+# HOST = "10.0.1.32"
 HOST = "192.168.86.32"
 
 _mode = None
@@ -24,7 +28,7 @@ inputMap = {
 	"05" : "DVR",
 	"01" : "TV",
 	"13" : "USB-DAC",
-	"02" : "TUNER",	
+	"02" : "TUNER",
 	"00" : "PHONO",
 	"12" : "MULTI CH IN",
 	"33" : "ADAPTER PORT",
@@ -42,7 +46,7 @@ commandMap = { "on" : "PO",
 	"unmute": "MF",
 
 	"volume": "?V",
-	
+
 	"tone" : "9TO", # cyclic
 	"tone off" : "0TO",
 	"tone on" : "1TO",
@@ -91,7 +95,7 @@ commandMap = { "on" : "PO",
         "tuner" : "02FN",
         "phono" : "00FN", # invalid command
         "hdmi" : "31FN", # cyclic
-        "pandora" : "41FN",	
+        "pandora" : "41FN",
 
         # TODO: could have a pandora mode, radio mode, etc.
 	# Pandora ones:
@@ -136,20 +140,20 @@ def readline(tn):
 def decodeFL(s):
     # print("Original Url string is:", s)
     if not s.startswith('FL'):
-          return None
+        return None
     s = s[2:] #  the FL
     s = s[2:] # skip first two
     i = 0
     url = ""
     while i < len(s):
-          url += "%"
-          url += s[i:i+2]
-          i += 2
+        url += "%"
+        url += s[i:i+2]
+        i += 2
     result = urllib.parse.unquote(url)
     # print("Url is", url, "result is", result)
     return result
 
-def parseError(s):
+def parse_error(s):
     if s == "E02" : return "NOT AVAILABLE NOW"
     if s == "E03" : return "INVALID COMMAND"
     if s == "E04" : return "COMMAND ERROR"
@@ -166,38 +170,38 @@ def decodeAST(s):
     # The manual starts counting at 1, so to fix this off-by-one, we do:
     s = '-' + s
     # channels...
-    print("Input Channels:"),
-    if int(s[5]): print("Left, "),
-    if int(s[6]): print("Center, "),
-    if int(s[7]): print("Right, "),
-    if int(s[8]): print("SL, "),
-    if int(s[9]): print("SR, "),
-    if int(s[10]): print("SBL, "),
-    if int(s[11]): print("S, "),
-    if int(s[12]): print("SBR, "),
-    if int(s[13]): print("LFE, "),
-    if int(s[14]): print("FHL, "),
-    if int(s[15]): print("FHR, "),
-    if int(s[16]): print("FWL, "),
-    if int(s[17]): print("FWR, "),
-    if int(s[18]): print("XL, "),
-    if int(s[19]): print("XC, "),
-    if int(s[20]): print("XR, "),
+    print("Input Channels:")
+    if int(s[5]): print("Left, ")
+    if int(s[6]): print("Center, ")
+    if int(s[7]): print("Right, ")
+    if int(s[8]): print("SL, ")
+    if int(s[9]): print("SR, ")
+    if int(s[10]): print("SBL, ")
+    if int(s[11]): print("S, ")
+    if int(s[12]): print("SBR, ")
+    if int(s[13]): print("LFE, ")
+    if int(s[14]): print("FHL, ")
+    if int(s[15]): print("FHR, ")
+    if int(s[16]): print("FWL, ")
+    if int(s[17]): print("FWR, ")
+    if int(s[18]): print("XL, ")
+    if int(s[19]): print("XC, ")
+    if int(s[20]): print("XR, ")
     print("")
-    print("Output Channels:"),
-    if int(s[26]): print("Left, "),
-    if int(s[27]): print("Center, "),
-    if int(s[28]): print("Right, "),
-    if int(s[29]): print("SL, "),
-    if int(s[30]): print("SR, "),
-    if int(s[31]): print("SBL, "),
-    if int(s[32]): print("S, "),
-    if int(s[33]): print("SBR, "),
-    if int(s[34]): print("LFE, "),
-    if int(s[35]): print("FHL, "),
-    if int(s[36]): print("FHR, "),
-    if int(s[37]): print("FWL, "),
-    if int(s[38]): print("FWR, "),
+    print("Output Channels:")
+    if int(s[26]): print("Left, ")
+    if int(s[27]): print("Center, ")
+    if int(s[28]): print("Right, ")
+    if int(s[29]): print("SL, ")
+    if int(s[30]): print("SR, ")
+    if int(s[31]): print("SBL, ")
+    if int(s[32]): print("S, ")
+    if int(s[33]): print("SBR, ")
+    if int(s[34]): print("LFE, ")
+    if int(s[35]): print("FHL, ")
+    if int(s[36]): print("FHR, ")
+    if int(s[37]): print("FWL, ")
+    if int(s[38]): print("FWR, ")
     print("")
     sys.stdout.flush()
     return True
@@ -239,7 +243,7 @@ def decode_ais(s):
     if s=="17": return "DOLBY TrueHD"
     if s=="18": return "DTS EXPRESS"
     if s=="19": return "DTS-HD Master Audio"
-    if s>="20" and s<="26": return "DTS-HD High Resolution"
+    if "20" <= s <="26": return "DTS-HD High Resolution"
     if s=="27": return "DTS-HD Master Audio"
     return None
 
@@ -307,11 +311,11 @@ def decodeGeh(s):
     if not s.startswith('GEH'):
         return None
     s = s[3:]
-    line = s[0:2]
-    focus = s[2]
-    type = typeMap.get(s[3:5], "unknown (%s)" %s[3:5])
+    # line = s[0:2]
+    # focus = s[2]
+    typeval = typeMap.get(s[3:5], "unknown (%s)" %s[3:5])
     info = s[5:]
-    return type + ": " + info
+    return typeval + ": " + info
 
 # We really want two threads: one with the output, another with the commands.
 
@@ -322,7 +326,7 @@ def read_loop(tn):
       count += 1
       s = readline(tn)
       s = s.decode()
-      err = parseError(s)
+      err = parse_error(s)
       if err:
          print(count, "ERROR: ", err)
          continue
@@ -340,8 +344,8 @@ def read_loop(tn):
         sys.stdout.write("%s\r" % fl)
         continue
       if s.startswith('FN'):
-        input = inputMap.get(s[2:], "unknown (%s)" % s)
-        print("Input is", input)
+        inputs = inputMap.get(s[2:], "unknown (%s)" % s)
+        print(f"Input is {inputs}")
         continue
       if s.startswith('ATW'):
         print("loudness is "),
@@ -387,14 +391,14 @@ def read_loop(tn):
 def write_loop(tn):
     while True:
       command = input("command: ").strip()
-      if command == "quit" or command == "exit":
+      if command in ("quit", "exit"):
         print("Read thread says bye-bye!")
         # sys.exit()
         return
       if command == "status":
         get_status(tn)
         continue
-      if command == "help" or command == "?":
+      if command in ("help", "?"):
         print_help()
         continue
       if command.startswith("select"):
@@ -434,12 +438,12 @@ def change_mode(tn, command):
     return None
 
 def second_arg(cmd):
-        l = cmd.split(" ")
-        if len(l) < 2:
-            return ""
-        return l[1].strip()
+    l = cmd.split(" ")
+    if len(l) < 2:
+        return ""
+    return l[1].strip()
 
-# Listening mode, in the order they appear in the spreadsheet. 
+# Listening mode, in the order they appear in the spreadsheet.
 # looks like PDF doc has different ones (it's from 2010)
 # These come from the list of listening mode requests, which is shorter than
 # the list of displayed modes (above)
@@ -453,11 +457,12 @@ def translateMode(s):
 
 
 def get_status(tn):
-      send(tn, "?BA")
-      send(tn, "?TR")
-      send(tn, "?TO")
-      send(tn, "?L")
-      send(tn, "?AST")
+    '''Gets the status by sending a series of status requests. Each prints the corresponding info.'''
+    send(tn, "?BA")
+    send(tn, "?TR")
+    send(tn, "?TO")
+    send(tn, "?L")
+    send(tn, "?AST")
 
 
 class ReadThread(threading.Thread):
@@ -475,7 +480,7 @@ class ReadThread(threading.Thread):
 if __name__ == "__main__":
 
       parser = OptionParser()
-      
+
       (options, args) = parser.parse_args()
       if len(args) > 0:
         HOST = args[0]
@@ -494,5 +499,5 @@ if __name__ == "__main__":
       readThread.daemon = True
       readThread.start()
 
-      # the main thread does the writing, everyting exits when it does:
+      # the main thread does the writing, and everything exits when it does:
       write_loop(tn)

@@ -252,7 +252,7 @@ def db_level(s):
     db = 6 - n
     return "%ddB" % db
 
-def decodeTone(s):
+def decode_tone(s):
     if s.startswith("TR"):
         return "treble at " + db_level(s[2:4])
     if s.startswith("BA"):
@@ -330,7 +330,7 @@ def read_loop(tn):
       if err:
          print(count, "ERROR: ", err)
          continue
-      tone = decodeTone(s)
+      tone = decode_tone(s)
       if tone:
         print(tone)
         continue
@@ -390,36 +390,36 @@ def read_loop(tn):
 
 def write_loop(tn):
     while True:
-      command = input("command: ").strip()
-      if command in ("quit", "exit"):
-        print("Read thread says bye-bye!")
-        # sys.exit()
-        return
-      if command == "status":
-        get_status(tn)
-        continue
-      if command in ("help", "?"):
-        print_help()
-        continue
-      if command.startswith("select"):
-         s = second_arg(command).rjust(2,"0") + "GFI"
-         send(tn, s)
-         continue
-      if command.startswith("display"):
-         s = second_arg(command).rjust(5, "0") + "GCI" # may need to pad with zeros.
-         send(tn, s)
-         continue
-      s = commandMap.get(command, None)
-      if s:
-        send(tn, s)
-        continue
-      if command.startswith("mode"):
-        change_mode(tn, command)
-        continue
-      if command != "":
-        print("Sending raw command " + command)
-        sys.stdout.flush()
-        send(tn, command) # try original one
+        command = input("command: ").strip()
+        if command in ("quit", "exit"):
+            print("Read thread says bye-bye!")
+            # sys.exit()
+            return
+        if command == "status":
+            get_status(tn)
+            continue
+        if command in ("help", "?"):
+            print_help()
+            continue
+        if command.startswith("select"):
+            s = second_arg(command).rjust(2,"0") + "GFI"
+            send(tn, s)
+            continue
+        if command.startswith("display"):
+            s = second_arg(command).rjust(5, "0") + "GCI" # may need to pad with zeros.
+            send(tn, s)
+            continue
+        s = commandMap.get(command, None)
+        if s:
+            send(tn, s)
+            continue
+        if command.startswith("mode"):
+            change_mode(tn, command)
+            continue
+        if command != "":
+            print("Sending raw command " + command)
+            sys.stdout.flush()
+            send(tn, command) # try original one
 
 
 # TODO: some modes work and some don't
@@ -466,11 +466,11 @@ def get_status(tn):
 
 
 class ReadThread(threading.Thread):
-      """ This thread reads the lines coming back from telnet """
-      def __init__(self, tn):
+    """ This thread reads the lines coming back from telnet """
+    def __init__(self, tn):
         self.tn = tn
         threading.Thread.__init__(self)
-      def run(self):
+    def run(self):
         read_loop(self.tn)
 
 
@@ -479,25 +479,24 @@ class ReadThread(threading.Thread):
 
 if __name__ == "__main__":
 
-      parser = OptionParser()
+    parser = OptionParser()
 
-      (options, args) = parser.parse_args()
-      if len(args) > 0:
+    (options, args) = parser.parse_args()
+    if len(args) > 0:
         HOST = args[0]
 
-      tn = telnetlib.Telnet(HOST)
-      # tn.set_debuglevel(100)
+    telnet_connection = telnetlib.Telnet(HOST)
+    # telnet_connection.set_debuglevel(100)
+    # time.sleep(0.5)
 
-      # time.sleep(0.5)
+    test_s = telnet_connection.read_very_eager()
+    print("very eager: ", test_s)
 
-      s = tn.read_very_eager()
-      print("very eager: ", s)
+    send(telnet_connection, "?P") # to wake up
 
-      send(tn, "?P") # to wake up
+    readThread = ReadThread(telnet_connection)
+    readThread.daemon = True
+    readThread.start()
 
-      readThread = ReadThread(tn)
-      readThread.daemon = True
-      readThread.start()
-
-      # the main thread does the writing, and everything exits when it does:
-      write_loop(tn)
+    # the main thread does the writing, and everything exits when it does:
+    write_loop(telnet_connection)

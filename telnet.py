@@ -18,108 +18,108 @@ from modes_set import modeSetMap, inverseModeSetMap
 # HOST = "10.0.1.32"
 HOST = "192.168.86.32"
 
-_mode = None
 
 inputMap = {
-	"41" : "Pandora",
-	"44" : "Media Server",
-	"45" : "Favorites",
-	"17" : "iPod/USB",
-	"05" : "DVR",
-	"01" : "TV",
-	"13" : "USB-DAC",
-	"02" : "TUNER",
-	"00" : "PHONO",
-	"12" : "MULTI CH IN",
-	"33" : "ADAPTER PORT",
-	"48" : "MHL",
-	"31" : "HDMI" # cyclic
-	}
+    "41" : "Pandora",
+    "44" : "Media Server",
+    "45" : "Favorites",
+    "17" : "iPod/USB",
+    "05" : "DVR",
+    "01" : "TV",
+    "13" : "USB-DAC",
+    "02" : "TUNER",
+    "00" : "PHONO",
+    "12" : "MULTI CH IN",
+    "33" : "ADAPTER PORT",
+    "48" : "MHL",
+    "31" : "HDMI" # cyclic
+}
 
-commandMap = { "on" : "PO",
-	"off": "PF",
-	"up": "VU",
-	"+": "VU",
-	"down": "VD",
-	"-": "VD",
-	"mute": "MO",
-	"unmute": "MF",
+commandMap = {
+    "on" : "PO",
+    "off": "PF",
+    "up": "VU",
+    "+": "VU",
+    "down": "VD",
+    "-": "VD",
+    "mute": "MO",
+    "unmute": "MF",
 
-	"volume": "?V",
+    "volume": "?V",
 
-	"tone" : "9TO", # cyclic
-	"tone off" : "0TO",
-	"tone on" : "1TO",
-	"treble up" : "TI",
-	"treble down" : "TD",
-	"treble reset" : "06TR",
-	"bass up" : "BI",
-	"bass down" : "BD",
-	"bass reset" : "06BA",
+    "tone" : "9TO", # cyclic
+    "tone off" : "0TO",
+    "tone on" : "1TO",
+    "treble up" : "TI",
+    "treble down" : "TD",
+    "treble reset" : "06TR",
+    "bass up" : "BI",
+    "bass down" : "BD",
+    "bass reset" : "06BA",
 
-	"mcacc" : "MC0", # cyclic
+    "mcacc" : "MC0", # cyclic
 
-	# phase control is recommended to be on:
-	"phase" : "IS9", # cyclic
+    # phase control is recommended to be on:
+    "phase" : "IS9", # cyclic
 
-        # cycle through stereo modes:
-        "stereo" : "0001SR",
-        "unplugged" : "0109SR",
-        "extended" : "0112SR",
+    # cycle through stereo modes:
+    "stereo" : "0001SR",
+    "unplugged" : "0109SR",
+    "extended" : "0112SR",
 
-	"mode" : "?S",
+    "mode" : "?S",
 
-	"loud" : "9ATW", # cyclic
+    "loud" : "9ATW", # cyclic
 
-        # switch inputs:
-	"bd" : "25FN",
-        "dvd" : "04FN",
-        "appleaudio" : "05FN",
-	"amazontv" : "06FN",
-        # "sat" : "06FN",
-	"video" : "10FN",
-	"hdmi1" : "19FN",
-	"hdmi2" : "20FN",
-	"hdmi3" : "21FN",
-	"hdmi4" : "22FN",
-	"hdmi5" : "23FN",
-	"hdmi6" : "24FN",
-	"apple" : "25FN",
-	"appletv" : "25FN",
-	"hdmi7" : "34FN",
-	"net" : "26FN", # cyclic
-        "tv" : "01FN",
-	"iradio" : "38FN",
-	"dvr" : "15FN",
-        "radio" : "02FN",
-        "tuner" : "02FN",
-        "phono" : "00FN", # invalid command
-        "hdmi" : "31FN", # cyclic
-        "pandora" : "41FN",
+    # switch inputs:
+    "bd" : "25FN",
+    "dvd" : "04FN",
+    "appleaudio" : "05FN",
+    "amazontv" : "06FN",
+    # "sat" : "06FN",
+    "video" : "10FN",
+    "hdmi1" : "19FN",
+    "hdmi2" : "20FN",
+    "hdmi3" : "21FN",
+    "hdmi4" : "22FN",
+    "hdmi5" : "23FN",
+    "hdmi6" : "24FN",
+    "apple" : "25FN",
+    "appletv" : "25FN",
+    "hdmi7" : "34FN",
+    "net" : "26FN", # cyclic
+    "tv" : "01FN",
+    "iradio" : "38FN",
+    "dvr" : "15FN",
+    "radio" : "02FN",
+    "tuner" : "02FN",
+    "phono" : "00FN", # invalid command
+    "hdmi" : "31FN", # cyclic
+    "pandora" : "41FN",
 
-        # TODO: could have a pandora mode, radio mode, etc.
-	# Pandora ones:
-        "start" : "30NW",
-        "next" : "13NW",
-	"pause" : "11NW",
-	"play" : "10NW",
-	"previous" : "12NW",
-	"stop" : "20NW",
-	"clear" : "33NW",
-	"repeat" : "34NW",
-	"random" : "35NW",
-	"menu" : "36NW",
+    # TODO: could have a pandora mode, radio mode, etc.
+    # Pandora ones:
+    "start" : "30NW",
+    "next" : "13NW",
+    "pause" : "11NW",
+    "play" : "10NW",
+    "previous" : "12NW",
+    "stop" : "20NW",
+    "clear" : "33NW",
+    "repeat" : "34NW",
+    "random" : "35NW",
+    "menu" : "36NW",
 
-        "info" : "?GAH",
-	"list" : "?GAI",
-	"top menu" : "19IP",
+    "info" : "?GAH",
+    "list" : "?GAI",
+    "top menu" : "19IP",
 
-	# Tuner ones:
-	"nextpreset" : "TPI",
-	"prevpreset" : "TPD",
-	"mpx" : "05TN",
+    # Tuner ones:
+    "nextpreset" : "TPI",
+    "prevpreset" : "TPD",
+    "mpx" : "05TN",
 
-        }
+}
 
 
 def print_help():
@@ -153,13 +153,16 @@ def decodeFL(s):
     # print("Url is", url, "result is", result)
     return result
 
+ErrorMap = {
+    "E02" : "NOT AVAILABLE NOW",
+    "E03" : "INVALID COMMAND",
+    "E04" : "COMMAND ERROR",
+    "E06" : "PARAMETER ERROR",
+    "B00" : "BUSY"
+    }
+
 def parse_error(s):
-    if s == "E02" : return "NOT AVAILABLE NOW"
-    if s == "E03" : return "INVALID COMMAND"
-    if s == "E04" : return "COMMAND ERROR"
-    if s == "E06" : return "PARAMETER ERROR"
-    if s == "B00" : return "BUSY"
-    return None
+    return ErrorMap.get(s, None)
 
 def decodeAST(s):
     if not s.startswith('AST'):
@@ -226,7 +229,7 @@ def decode_aif(s):
     return None
 
 def decode_ais(s):
-    if s>="00" and s<="02": return "ANALOG"
+    if "00" <= s <= "02": return "ANALOG"
     if s=="03" or s=="04": return "PCM"
     if s=="05": return "DOLBY DIGITAL"
     if s=="06": return "DTS"
@@ -264,27 +267,27 @@ def decode_tone(s):
     return None
 
 sourceMap = {"00" : "Intenet Radio",
-	"01" : "Media Server",
-	"06" : "SiriusXM",
-	"07" : "Pandora",
-	"10" : "AirPlay",
-	"11" : "Digital Media Renderer (DMR)"
-	}
+        "01" : "Media Server",
+        "06" : "SiriusXM",
+        "07" : "Pandora",
+        "10" : "AirPlay",
+        "11" : "Digital Media Renderer (DMR)"
+        }
 
 typeMap = {"20" : "Track",
-	"21" : "Artist",
-	"22" : "Album",
-	"23" : "Time",
-	"24" : "Genre",
-	"25" : "Chapter Number",
-	"26" : "Format",
-	"27" : "Bitrate",
-	"28" : "Category",
-	"29" : "Composer1",
-	"30" : "Composer2",
-	"31" : "Buffer",
-	"32" : "Channel"
-	}
+        "21" : "Artist",
+        "22" : "Album",
+        "23" : "Time",
+        "24" : "Genre",
+        "25" : "Chapter Number",
+        "26" : "Format",
+        "27" : "Bitrate",
+        "28" : "Category",
+        "29" : "Composer1",
+        "30" : "Composer2",
+        "31" : "Buffer",
+        "32" : "Channel"
+        }
 
 screenTypeMap = {
         "00" : "Message",
@@ -373,7 +376,7 @@ def read_loop(tn):
             else:
                 print("Phase control: unknown")
         continue
-      m = translateMode(s)
+      m = translate_mode(s)
       if m:
         print("Listening mode is %s (%s)" % (m, s))
         continue
@@ -448,7 +451,7 @@ def second_arg(cmd):
 # These come from the list of listening mode requests, which is shorter than
 # the list of displayed modes (above)
 
-def translateMode(s):
+def translate_mode(s):
     if not s.startswith('LM'):
         return None
     s = s[2:]

@@ -8,15 +8,14 @@ import sys
 import telnetlib
 import urllib.parse
 import threading
-from optparse import OptionParser
+import argparse
 
 from modes_display import modeDisplayMap
 from modes_set import modeSetMap, inverseModeSetMap
 
 
 
-# HOST = "10.0.1.32"
-HOST = "192.168.86.32"
+# HOST = "192.168.86.32"
 
 
 inputMap = {
@@ -484,18 +483,18 @@ class ReadThread(threading.Thread):
 
 if __name__ == "__main__":
 
-    parser = OptionParser()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('host', metavar='host', type=str, help='address of AVR')
 
-    (options, args) = parser.parse_args()
-    if len(args) > 0:
-        HOST = args[0]
+    args = parser.parse_args()
+    print(f"AVR hostname/address is {args.host}")
 
-    telnet_connection = telnetlib.Telnet(HOST)
+    telnet_connection = telnetlib.Telnet(args.host)
     # telnet_connection.set_debuglevel(100)
     # time.sleep(0.5)
 
     test_s = telnet_connection.read_very_eager()
-    print("very eager: ", test_s)
+    # print("very eager: ", test_s)
 
     send(telnet_connection, "?P") # to wake up
 

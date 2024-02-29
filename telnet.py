@@ -10,6 +10,8 @@ import urllib.parse
 import threading
 import argparse
 
+from typing import Optional
+
 from modes_display import modeDisplayMap
 from modes_set import modeSetMap, inverseModeSetMap
 
@@ -33,6 +35,8 @@ inputMap = {
     "48" : "MHL",
     "31" : "HDMI" # cyclic
 }
+
+# a:str = inputMap.get("foo", None)
 
 commandMap = {
     "on" : "PO",
@@ -129,14 +133,14 @@ def print_help():
     print("mode [mode]")
     print(inverseModeSetMap.keys())
 
-def send(tn, s):
+def send(tn, s:str):
     tn.write(s.encode() + b"\r\n")
 
-def readline(tn):
+def readline(tn) -> bytes:
     s = tn.read_until(b"\r\n")
     return s[:-2]
 
-def decodeFL(s):
+def decodeFL(s:str) -> Optional[str]:
     # print("Original Url string is:", s)
     if not s.startswith('FL'):
         return None
@@ -160,12 +164,12 @@ ErrorMap = {
     "B00" : "BUSY"
     }
 
-def parse_error(s):
+def parse_error(s:str):
     return ErrorMap.get(s, None)
 
-def decodeAST(s):
+def decodeAST(s:str) -> bool:
     if not s.startswith('AST'):
-        return None
+        return False
     s = s[3:]
     print("Audio input signal:" + decode_ais( s[0:2] ))
     print("Audio input frequency:" + decode_aif( s[2:4] ))
@@ -208,15 +212,14 @@ def decodeAST(s):
     sys.stdout.flush()
     return True
 
-def decode_vst(s):
-    if not s.startswith("VST"):
-        return None
-    s = s[3:]
-    s = '=' + s
+# def decode_vst(s:str) -> bool:
+#     if not s.startswith("VST"):
+#         return False
+#     s = s[3:]
+#     s = '=' + s
+#     return True
 
-    return True
-
-def decode_aif(s):
+def decode_aif(s:str) -> str:
     if s=="00": return "32kHz"
     if s=="01": return "44.1kHz"
     if s=="02": return "48kHz"
@@ -225,9 +228,9 @@ def decode_aif(s):
     if s=="05": return "176.4kHz"
     if s=="06": return "192kHz"
     if s=="07": return "---"
-    return None
+    return "unknown"
 
-def decode_ais(s):
+def decode_ais(s:str) -> str:
     if "00" <= s <= "02": return "ANALOG"
     if s=="03" or s=="04": return "PCM"
     if s=="05": return "DOLBY DIGITAL"
@@ -245,16 +248,16 @@ def decode_ais(s):
     if s=="17": return "DOLBY TrueHD"
     if s=="18": return "DTS EXPRESS"
     if s=="19": return "DTS-HD Master Audio"
-    if "20" <= s <="26": return "DTS-HD High Resolution"
+    if "20" <= s <= "26": return "DTS-HD High Resolution"
     if s=="27": return "DTS-HD Master Audio"
-    return None
+    return "unknown"
 
-def db_level(s):
+def db_level(s) -> str:
     n = int(s)
     db = 6 - n
-    return "%ddB" % db
+    return f"{db}dB"
 
-def decode_tone(s):
+def decode_tone(s: str) -> Optional[str]:
     if s.startswith("TR"):
         return "treble at " + db_level(s[2:4])
     if s.startswith("BA"):
@@ -265,41 +268,44 @@ def decode_tone(s):
         return "tone on"
     return None
 
-sourceMap = {"00" : "Intenet Radio",
-        "01" : "Media Server",
-        "06" : "SiriusXM",
-        "07" : "Pandora",
-        "10" : "AirPlay",
-        "11" : "Digital Media Renderer (DMR)"
-        }
+sourceMap = {
+    "00" : "Intenet Radio",
+    "01" : "Media Server",
+    "06" : "SiriusXM",
+    "07" : "Pandora",
+    "10" : "AirPlay",
+    "11" : "Digital Media Renderer (DMR)"
+}
 
-typeMap = {"20" : "Track",
-        "21" : "Artist",
-        "22" : "Album",
-        "23" : "Time",
-        "24" : "Genre",
-        "25" : "Chapter Number",
-        "26" : "Format",
-        "27" : "Bitrate",
-        "28" : "Category",
-        "29" : "Composer1",
-        "30" : "Composer2",
-        "31" : "Buffer",
-        "32" : "Channel"
-        }
+typeMap = {
+    "20" : "Track",
+    "21" : "Artist",
+    "22" : "Album",
+    "23" : "Time",
+    "24" : "Genre",
+    "25" : "Chapter Number",
+    "26" : "Format",
+    "27" : "Bitrate",
+    "28" : "Category",
+    "29" : "Composer1",
+    "30" : "Composer2",
+    "31" : "Buffer",
+    "32" : "Channel"
+}
 
 screenTypeMap = {
-        "00" : "Message",
-        "01" : "List",
-        "02" : "Playing (Play)",
-        "03" : "Playing (Pause)",
-        "04" : "Playing (Fwd)",
-        "05" : "Playing (Rev)",
-        "06" : "Playing (Stop)",
-        "99" : "Invalid"
-        }
+    "00" : "Message",
+    "01" : "List",
+    "02" : "Playing (Play)",
+    "03" : "Playing (Pause)",
+    "04" : "Playing (Fwd)",
+    "05" : "Playing (Rev)",
+    "06" : "Playing (Stop)",
+    "99" : "Invalid"
+}
 
-def decodeGeh(s):
+
+def decodeGeh(s: str) -> Optional[str]:
     if s.startswith("GDH"):
         bytes = s[3:]
         return "items " + bytes[0:5] + " to " + bytes[5:10] + " of total " + bytes[10:]
@@ -315,20 +321,22 @@ def decodeGeh(s):
     s = s[3:]
     # line = s[0:2]
     # focus = s[2]
-    typeval = typeMap.get(s[3:5], "unknown (%s)" %s[3:5])
+    tstring = s[3:5]
+    typeval = typeMap.get(tstring, f"unknown ({tstring})")
     info = s[5:]
     return typeval + ": " + info
 
+
 # We really want two threads: one with the output, another with the commands.
 
-def read_loop(tn):
+def read_loop(tn: telnetlib.Telnet) -> None:
     """Main read loop"""
     sys.stdout.flush()
-    count = 0
+    count:int = 0
     while True:
         count += 1
-        s = readline(tn)
-        s = s.decode()
+        b:bytes = readline(tn)
+        s = b.decode()
         err = parse_error(s)
         if err:
             print(count, "ERROR: ", err)
@@ -344,10 +352,10 @@ def read_loop(tn):
         # print("s has type", type(s)) # bytes
         fl = decodeFL(s)
         if fl:
-            sys.stdout.write("%s\r" % fl)
+            sys.stdout.write(f"{fl}\r")
             continue
         if s.startswith('FN'):
-            inputs = inputMap.get(s[2:], "unknown (%s)" % s)
+            inputs = inputMap.get(s[2:], f"unknown ({s})")
             print(f"Input is {inputs}")
             continue
         if s.startswith('ATW'):
@@ -364,7 +372,7 @@ def read_loop(tn):
             continue
         if s.startswith('ATE'):
             num = s[3:]
-            if num >= "00" and num <= "16":
+            if "00" <= num <= "16":
                 print("Phase control: " + num + "ms")
             else:
                 if num == "97":
@@ -391,8 +399,10 @@ def read_loop(tn):
         # default:
         print(count, s)
 
-def write_loop(tn):
+
+def write_loop(tn: telnetlib.Telnet) -> None:
     """Main write loop"""
+    s: Optional[str] = None
     while True:
         command = input("command: ").strip()
         if command in ("quit", "exit"):
@@ -429,19 +439,19 @@ def write_loop(tn):
 # TODO: some modes work and some don't
 # document which ones, only include those in help
 
-def change_mode(tn, command):
+def change_mode(tn, command:str) -> bool:
     l = command.split(" ")
     if len(l) < 2:
-        return None
+        return False
     modestring = " ".join(l[1:]).lower()
     m = inverseModeSetMap.get(modestring, None)
     if m:
         send(tn, m + "SR")
-        return True
+        return False
     print("Unknown " + command) # "Unknown mode <mode>" message
-    return None
+    return False
 
-def second_arg(cmd):
+def second_arg(cmd: str) -> str:
     l = cmd.split(" ")
     if len(l) < 2:
         return ""
@@ -452,7 +462,7 @@ def second_arg(cmd):
 # These come from the list of listening mode requests, which is shorter than
 # the list of displayed modes (above)
 
-def translate_mode(s):
+def translate_mode(s: str) -> Optional[str]:
     if not s.startswith('LM'):
         return None
     s = s[2:]
@@ -461,7 +471,8 @@ def translate_mode(s):
 
 
 def get_status(tn):
-    '''Gets the status by sending a series of status requests. Each prints the corresponding info.'''
+    """Gets the status by sending a series of status requests.
+       Each request prints the corresponding info."""
     send(tn, "?BA")
     send(tn, "?TR")
     send(tn, "?TO")

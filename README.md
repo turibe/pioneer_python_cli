@@ -1,16 +1,17 @@
-pioneer_python_cli
+# pioneer_python_cli
+
 ==================
 
 Barebones python command-line interface (cli) for controlling an internet-connected Pioneer AVR (Receiver/Amp).
 
 Tested on a pioneer SC-1222-K.
 
-** Usage:
+## Usage:
 
 1. Find out your AVR's IP address.
-2. Edit the telnet.py file, set the variable HOST to it, and do "python3 telnet.py <host>".
+2. Run "python3 telnet.py <ipaddress>".
 
-** Some commands:
+## Some commands:
 
 up              [volume up]
 down            [volume down]

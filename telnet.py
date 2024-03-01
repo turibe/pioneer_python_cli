@@ -9,6 +9,7 @@ import telnetlib
 import urllib.parse
 import threading
 import argparse
+import time
 
 from typing import Optional
 
@@ -422,6 +423,19 @@ def write_loop(tn: telnetlib.Telnet) -> None:
         if command.startswith("display"):
             s = second_arg(command).rjust(5, "0") + "GCI" # may need to pad with zeros.
             send(tn, s)
+            continue
+        intval = int(command) if command.split("-", 1)[-1].isdecimal() else None
+        if intval:
+            if intval > 0:
+                intval = max(intval, 5)
+                for x in range(1,intval,1):
+                    send(tn, "VU")
+                    time.sleep(0.1)
+            if intval < 0:
+                intval = abs(max(intval, -30))
+                for x in range(0,intval,1):
+                    send(tn, "VD")
+                    time.sleep(0.1)
             continue
         s = commandMap.get(command, None)
         if s:

@@ -15,13 +15,13 @@ Disclaimer: Use at your own risk.
 
 ## Some commands:
 
-up              [volume up]
-down            [volume down]
-<integer>       [if positive, increase volume this number of times, capped at 5]
--<integer>      [if negative, decrease volume this number of times]
+- up              [volume up]
+- down            [volume down]
+- <integer>       [if positive, increase volume this number of times, capped at 5]
+- -<integer>      [if negative, decrease volume this number of times]
 
-<input_name>    [switch to given input]
-mode            [cycle through stereo and surround audio modes]
-status          [print status]
+- <input_name>    [switch to given input]
+- mode            [cycle through stereo and surround audio modes]
+- status          [print status]
 
-Use control-D to exit.
+- Use control-D to exit.

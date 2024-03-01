@@ -2,9 +2,11 @@
 
 ==================
 
-Barebones python command-line interface (CLI) for controlling an Internet-connected Pioneer AVR (Receiver/Amp).
+Barebones Python command-line interface (CLI) for controlling an Internet-connected Pioneer AVR (Receiver/Amp).
 
 Tested on a Pioneer SC-1222-K Amp.
+
+License: MIT.
 
 Disclaimer: *Use at your own risk.*
 
@@ -16,7 +18,7 @@ Disclaimer: *Use at your own risk.*
 ## Some commands:
 
 - `up`              [volume up]
-- `down1            [volume down]
+- `down`            [volume down]
 - `<integer>`       [if positive, increase volume this number of times, capped at 5]
 - `-<integer>`      [if negative, decrease volume this number of times]
 

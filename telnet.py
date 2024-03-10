@@ -16,10 +16,7 @@ from typing import Optional
 from modes_display import modeDisplayMap
 from modes_set import modeSetMap, inverseModeSetMap
 
-
-
 # HOST = "192.168.86.32"
-
 
 inputMap = {
     "41" : "Pandora",
@@ -123,6 +120,12 @@ commandMap = {
     "prevpreset" : "TPD",
     "mpx" : "05TN",
 
+    # Cyclic mode shortcuts:
+    # cycles through thx modes, but input must be THX:
+    "thx" : "0050SR",
+    # cycles through surround modes (shortcut for "mode" command):
+    "surr" : "0100SR"
+
 }
 
 
@@ -131,8 +134,12 @@ def print_help():
     # l.sort()
     for x in l:
         print(x)
-    print("mode [mode]")
-    print(inverseModeSetMap.keys())
+    print("""Use "help mode" for information on modes\n""")
+
+def print_mode_help():
+    print("mode [mode]\tfor one of:\n")
+    for i in inverseModeSetMap:
+        print(f"{i}")
 
 def send(tn, s:str):
     tn.write(s.encode() + b"\r\n")
@@ -168,9 +175,24 @@ ErrorMap = {
 def parse_error(s:str):
     return ErrorMap.get(s, None)
 
+def decodeVTC(s: str) -> bool:
+    "Decodes a VTC (video resollution) status status string"
+    assert(s.startswith('VTC'))
+    s = s[3:]
+    if s == "00": print("AUTO Resolution")
+    if s == "01": print("PURE Resolution")
+    if s == "02": print("Reserved Resolution")
+    if s == "03": print("R480/576 Resolution")
+    if s == "04": print("720p Resolution")
+    if s == "05": print("1080i Resolution")
+    if s == "06": print("1080p Resolution")
+    if s == "07": print("1080/24p Resolution")
+    sys.stdout.flush()
+    return True
+
 def decodeAST(s:str) -> bool:
-    if not s.startswith('AST'):
-        return False
+    "Decodes an AST return status string"
+    assert(s.startswith('AST'))
     s = s[3:]
     print("Audio input signal:" + decode_ais( s[0:2] ))
     print("Audio input frequency:" + decode_aif( s[2:4] ))
@@ -308,8 +330,8 @@ screenTypeMap = {
 
 def decodeGeh(s: str) -> Optional[str]:
     if s.startswith("GDH"):
-        bytes = s[3:]
-        return "items " + bytes[0:5] + " to " + bytes[5:10] + " of total " + bytes[10:]
+        sbytes = s[3:]
+        return "items " + sbytes[0:5] + " to " + sbytes[5:10] + " of total " + sbytes[10:]
     if s.startswith("GBH"):
         return "max list number: " + s[2:]
     if s.startswith("GCH"):
@@ -391,6 +413,8 @@ def read_loop(tn: telnetlib.Telnet) -> None:
             continue
         if s.startswith('AST') and decodeAST(s):
             continue
+        if s.startswith('VTC') and decodeVTC(s):
+            continue
         if s.startswith('SR'):
             code = s[2:]
             v = modeSetMap.get(code, None)
@@ -406,6 +430,9 @@ def write_loop(tn: telnetlib.Telnet) -> None:
     s: Optional[str] = None
     while True:
         command = input("command: ").strip()
+        split_command = command.split()        
+        base_command = split_command[0] if len(split_command) > 0 else None
+        # print(f"base command: {base_command}\n")
         if command in ("quit", "exit"):
             print("Read thread says bye-bye!")
             # sys.exit()
@@ -413,9 +440,13 @@ def write_loop(tn: telnetlib.Telnet) -> None:
         if command == "status":
             get_status(tn)
             continue
-        if command in ("help", "?"):
-            print_help()
-            continue
+        if base_command in ("help", "?"):
+            if command in ("help", "?"):
+                print_help()
+                continue
+            if len(split_command) > 1 and split_command[1] == "mode":
+                print_mode_help()
+                continue
         if command.startswith("select"):
             s = second_arg(command).rjust(2,"0") + "GFI"
             send(tn, s)
@@ -429,13 +460,13 @@ def write_loop(tn: telnetlib.Telnet) -> None:
             if intval > 0:
                 intval = min(intval, 10)
                 print(f"Volume up {intval}")
-                for x in range(1, intval+1):
+                for _x in range(1, intval+1):
                     send(tn, "VU")
                     time.sleep(0.1)
             if intval < 0:
                 intval = abs(max(intval, -30))
                 print(f"Volume down {intval}")
-                for x in range(0, intval):
+                for _x in range(0, intval):
                     send(tn, "VD")
                     time.sleep(0.1)
             continue
@@ -443,8 +474,8 @@ def write_loop(tn: telnetlib.Telnet) -> None:
         if s:
             send(tn, s)
             continue
-        if command.startswith("mode"):
-            change_mode(tn, command)
+        if base_command == "mode":
+            change_mode(tn, split_command)
             continue
         if command != "":
             print("Sending raw command " + command)
@@ -455,17 +486,36 @@ def write_loop(tn: telnetlib.Telnet) -> None:
 # TODO: some modes work and some don't
 # document which ones, only include those in help
 
-def change_mode(tn, command:str) -> bool:
-    l = command.split(" ")
+def get_mode(modestring:str) -> set[str]:
+    s:set[str] = set({})
+    for i in inverseModeSetMap:
+        if i.startswith(modestring):
+            s.add(i)
+    return s
+
+def change_mode(tn, l: list[str]) -> bool:
     if len(l) < 2:
         return False
     modestring = " ".join(l[1:]).lower()
-    m = inverseModeSetMap.get(modestring, None)
-    if m:
+    if modestring == "help":
+        print_mode_help()
+        return False
+    mset = get_mode(modestring)
+    if len(mset) == 0:
+        print(f"Unknown mode {modestring}") # "Unknown mode <mode>" message
+        return False
+    if len(mset) == 1:
+        mode = mset.pop()
+        m = inverseModeSetMap.get(mode)
+        assert(m is not None)
+        print(f"trying to change mode to {modestring} ({m})")
         send(tn, m + "SR")
         return False
-    print("Unknown " + command) # "Unknown mode <mode>" message
-    return False
+    else:
+        print("Which one do you mean:")
+        for i in mset:
+            print(i)
+        return False
 
 def second_arg(cmd: str) -> str:
     l = cmd.split(" ")
@@ -494,6 +544,7 @@ def get_status(tn):
     send(tn, "?TO")
     send(tn, "?L")
     send(tn, "?AST")
+    # send(tn, "?VTC") # not very interesting if always AUTO
 
 
 class ReadThread(threading.Thread):

@@ -135,7 +135,7 @@ def print_help():
     # l.sort()
     for x in l:
         print(x)
-    print("""Use "help mode" for information on modes\n""")
+    print("""Use "help mode" for information on modes, "quit" to exit\n""")
 
 def print_mode_help():
     "Lists the mode change options (not all work)"
@@ -358,7 +358,7 @@ screenTypeMap = {
     "99" : "Invalid"
 }
 
-
+# TODO: add unit tests
 def decode_geh(s: str) -> Optional[str]:
     if s.startswith("GDH"):
         sbytes = s[3:]
@@ -453,7 +453,7 @@ def read_loop(tn: telnetlib.Telnet) -> None:
                 print(f"mode is {v} ({s})")
                 continue
         # default:
-        print(count, s)
+        print(f"{count}: unknown status {s}")
 
 
 def write_loop(tn: telnetlib.Telnet) -> None:
@@ -493,7 +493,7 @@ def write_loop(tn: telnetlib.Telnet) -> None:
             if intval > 0:
                 intval = min(intval, 10)
                 print(f"Volume up {intval}")
-                for _x in range(1, intval+1):
+                for _x in range(0, intval):
                     send(tn, "VU")
                     time.sleep(0.1)
             if intval < 0:
@@ -526,6 +526,7 @@ def get_mode(modestring:str) -> set[str]:
             s.add(i)
     return s
 
+# return value not used:
 def change_mode(tn, l: list[str]) -> bool:
     "Attempts to change the mode given the (split) command l"
     if len(l) < 2:
@@ -565,8 +566,7 @@ def translate_mode(s: str) -> Optional[str]:
     if not s.startswith('LM'):
         return None
     s = s[2:]
-    m = modeDisplayMap.get(s, None)
-    return m or "Unknown"
+    return modeDisplayMap.get(s, "Unknown")
 
 
 def get_status(tn):

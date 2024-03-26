@@ -18,23 +18,51 @@ from modes_set import modeSetMap, inverseModeSetMap
 
 # HOST = "192.168.86.32"
 
-inputMap = {
+inputSourcesMap = {
+    "00" : "PHONO",
+    "01" : "TV",    
+    "02" : "TUNER",
+    "04" : "DVD",
+    "05" : "APPLE",
+    "06" : "AMAZON",
+    "10" : "VIDEO",
+    "12" : "MULTI CH IN",
+    "13" : "USB-DAC",
+    "15" : "DVR",
+    "17" : "iPod/USB",
+    "19" : "HDMI1",
+    "20" : "HDMI2",
+    "21" : "HDMI3",
+    "22" : "HDMI4",
+    "23" : "HDMI5",
+    "24" : "HDMI6",
+    "25" : "APPLE",
+    "26" : "NET", # cyclic
+    "31" : "HDMI", # cyclic
+    "33" : "ADAPTER PORT",
+    "38" : "IRADIO",
     "41" : "Pandora",
     "44" : "Media Server",
     "45" : "Favorites",
-    "17" : "iPod/USB",
-    "05" : "DVR",
-    "01" : "TV",
-    "13" : "USB-DAC",
-    "02" : "TUNER",
-    "00" : "PHONO",
-    "12" : "MULTI CH IN",
-    "33" : "ADAPTER PORT",
-    "48" : "MHL",
-    "31" : "HDMI" # cyclic
+    "48" : "MHL" # device input, not working on test AVR
 }
 
-# a:str = inputMap.get("foo", None)
+# the value here is the command for changing to the source given by the key
+inverseSourcesMap = {}
+for (k,v) in inputSourcesMap.items():
+    newk = v.lower()    
+    inverseSourcesMap[newk] = k + "FN"
+
+def add_alias(a,b):
+    if inverseSourcesMap.get(a) is None and inverseSourcesMap.get(b):
+        inverseSourcesMap[a] = inverseSourcesMap[b]
+    else:
+        if inverseSourcesMap.get(b) is None and inverseSourcesMap.get(a):
+            inverseSourcesMap[b] = inverseSourcesMap[a]
+
+add_alias("amazon", "appletv")
+add_alias("amazon", "amazontv")
+add_alias("radio", "tuner")
 
 commandMap = {
     "on" : "PO",
@@ -72,31 +100,9 @@ commandMap = {
 
     "loud" : "9ATW", # cyclic
 
-    # switch inputs:
-    "bd" : "25FN",
-    "dvd" : "04FN",
-    "appleaudio" : "05FN",
-    "amazontv" : "06FN",
-    # "sat" : "06FN",
-    "video" : "10FN",
-    "hdmi1" : "19FN",
-    "hdmi2" : "20FN",
-    "hdmi3" : "21FN",
-    "hdmi4" : "22FN",
-    "hdmi5" : "23FN",
-    "hdmi6" : "24FN",
-    "apple" : "25FN",
-    "appletv" : "25FN",
-    "hdmi7" : "34FN",
-    "net" : "26FN", # cyclic
-    "tv" : "01FN",
-    "iradio" : "38FN",
-    "dvr" : "15FN",
-    "radio" : "02FN",
-    "tuner" : "02FN",
-    "phono" : "00FN", # invalid command
-    "hdmi" : "31FN", # cyclic
-    "pandora" : "41FN",
+    # commands for switching inputs have the form XXFN, now derived from inputSourcesMap.
+    # "phono" : "00FN", # invalid command
+    # "hdmi" : "31FN", # cyclic
 
     # TODO: could have a pandora mode, radio mode, etc.
     # Pandora ones:
@@ -125,9 +131,13 @@ commandMap = {
     "thx" : "0050SR",
     # cycles through surround modes (shortcut for "mode" command):
     "surr" : "0100SR"
-
 }
 
+for (i,k) in commandMap.items():
+    if k.endswith("FN"):
+        code = k[0:2]
+        inputSourcesMap[code] = i
+        
 
 def print_help():
     "Prints help for the main commands"
@@ -135,12 +145,18 @@ def print_help():
     # l.sort()
     for x in l:
         print(x)
-    print("""Use "help mode" for information on modes\n""")
+    print("""Use "help mode" for information on modes, "help sources" for changing input sources, "quit" to exit\n""")
 
 def print_mode_help():
     "Lists the mode change options (not all work)"
     print("mode [mode]\tfor one of:\n")
     for i in inverseModeSetMap:
+        print(f"{i}")
+
+def print_input_source_help():
+    "Lists the input source change commands"
+    print("Enter one of the following to change input:")
+    for i in inverseSourcesMap:
         print(f"{i}")
 
 def send(tn, s:str):
@@ -358,7 +374,7 @@ screenTypeMap = {
     "99" : "Invalid"
 }
 
-
+# TODO: add unit tests
 def decode_geh(s: str) -> Optional[str]:
     if s.startswith("GDH"):
         sbytes = s[3:]
@@ -406,23 +422,29 @@ def read_loop(tn: telnetlib.Telnet) -> None:
         # print("s has type", type(s)) # bytes
         fl = decode_fl(s)
         if fl:
-            sys.stdout.write(f"{fl}\r")
+            sys.stdout.write(f"{fl}\r\n")
+            continue
+        if s == "PWR0":
+            print(f"Power is ON")
+            continue
+        if s == "PWR1":
+            print(f"Power is OFF")
             continue
         if s.startswith('FN'):
-            inputs = inputMap.get(s[2:], f"unknown ({s})")
+            inputs = inputSourcesMap.get(s[2:], f"unknown ({s})")
             print(f"Input is {inputs}")
             continue
         if s.startswith('ATW'):
-            print("loudness is ")
-            print("on" if s == "ATW1" else "off")
+            flag = "on" if s == "ATW1" else "off"
+            print(f"loudness is {flag}"),
             continue
         if s.startswith('ATC'):
-            print("eq is ")
-            print("on" if s == "ATC1" else "off")
+            fl = "on" if s == "ATC1" else "off"
+            print(f"eq is {fl}")
             continue
         if s.startswith('ATD'):
-            print("standing wave is ")
-            print("on" if s == "ATD1" else "off")
+            fl = "on" if s == "ATD1" else "off"
+            print(f"standing wave is {fl}")
             continue
         if s.startswith('ATE'):
             num = s[3:]
@@ -452,8 +474,11 @@ def read_loop(tn: telnetlib.Telnet) -> None:
             if v:
                 print(f"mode is {v} ({s})")
                 continue
+        if s.startswith('VOL'):
+            continue
         # default:
-        print(count, s)
+        # print(f"{count}: unknown status {s}")
+        print(f"[{count}, {s}]")
 
 
 def write_loop(tn: telnetlib.Telnet) -> None:
@@ -476,9 +501,14 @@ def write_loop(tn: telnetlib.Telnet) -> None:
             if command in ("help", "?"):
                 print_help()
                 continue
-            if len(split_command) > 1 and split_command[1] == "mode":
+            if len(split_command) > 1 and split_command[1] in ["mode", "modes"]:
                 print_mode_help()
                 continue
+            if len(split_command) > 1 and ("inputs".startswith(split_command[1]) or "sources".startswith(split_command[1])):
+                print_input_source_help()
+                continue
+            print(f"""Couldn't recognize help command "{command}" """)
+            continue
         if base_command == "select" and second_arg:
             s = second_arg.rjust(2,"0") + "GFI"
             send(tn, s)
@@ -493,7 +523,7 @@ def write_loop(tn: telnetlib.Telnet) -> None:
             if intval > 0:
                 intval = min(intval, 10)
                 print(f"Volume up {intval}")
-                for _x in range(1, intval+1):
+                for _x in range(0, intval):
                     send(tn, "VU")
                     time.sleep(0.1)
             if intval < 0:
@@ -503,7 +533,7 @@ def write_loop(tn: telnetlib.Telnet) -> None:
                     send(tn, "VD")
                     time.sleep(0.1)
             continue
-        s = commandMap.get(command, None)
+        s = commandMap.get(command, None) or inverseSourcesMap.get(command, None)
         if s:
             send(tn, s)
             continue
@@ -519,13 +549,14 @@ def write_loop(tn: telnetlib.Telnet) -> None:
 # TODO: some modes work and some don't;
 # document which ones, only include those in help
 
-def get_mode(modestring:str) -> set[str]:
+def get_modes_with_prefix(prefix:str) -> set[str]:
     s:set[str] = set({})
     for i in inverseModeSetMap:
-        if i.startswith(modestring):
+        if i.startswith(prefix):
             s.add(i)
     return s
 
+# return value not used:
 def change_mode(tn, l: list[str]) -> bool:
     "Attempts to change the mode given the (split) command l"
     if len(l) < 2:
@@ -534,7 +565,7 @@ def change_mode(tn, l: list[str]) -> bool:
     if modestring == "help":
         print_mode_help()
         return False
-    mset = get_mode(modestring)
+    mset = get_modes_with_prefix(modestring)
     if len(mset) == 0:
         print(f"Unknown mode {modestring}") # "Unknown mode <mode>" message
         return False
@@ -565,8 +596,7 @@ def translate_mode(s: str) -> Optional[str]:
     if not s.startswith('LM'):
         return None
     s = s[2:]
-    m = modeDisplayMap.get(s, None)
-    return m or "Unknown"
+    return modeDisplayMap.get(s, "Unknown")
 
 
 def get_status(tn):

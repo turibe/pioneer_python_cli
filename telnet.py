@@ -43,7 +43,6 @@ def load_command_map(folder:str):
         report(f"Could not read commandMap from {cfilename}, {ex}")
         sys.exit(1)
 
-global commandMap
 commandMap: dict[str,list[str]] = {}
 
 def print_help():
@@ -293,38 +292,38 @@ def get_modes_with_prefix(prefix:str) -> set[str]:
             s.add(i)
     return s
 
-# return value not used:
-def change_mode(tn, l: list[str]) -> bool:
-    "Attempts to change the mode given the (split) command l"
+def change_mode(tn, l: list[str]) -> None:
+    """Attempts to change the mode given the (split) command l.
+     Called for the side effect"""
     if len(l) < 2:
-        return False
+        return
     modestring = " ".join(l[1:]).lower()
     if modestring == "help":
         print_mode_help()
-        return False
+        return
     mset = get_modes_with_prefix(modestring)
     if len(mset) == 0:
-        report(f"Unknown mode {modestring}") # "Unknown mode <mode>" message
-        return False
+        report(f"Unknown mode {modestring}")
+        return
     if len(mset) == 1:
         mode = mset.pop()
         m = inverseModeSetMap.get(mode)
         assert m is not None
         report(f"trying to change mode to {modestring} ({m})")
         send(tn, m + "SR")
-        return False
+        return
     with print_lock:
         print("Which one do you mean? Options are:")
         for i in mset:
             print(i)
-    return False
+    return
 
 def second_arg_fun(cmd: str) -> Optional[str]:
-    """second argument, if any"""
-    l = cmd.split(" ")
-    if len(l) < 2:
+    """Returns the second argument, if any"""
+    lst = cmd.split(" ")
+    if len(lst) < 2:
         return None
-    return l[1].strip()
+    return lst[1].strip()
 
 # Listening mode, in the order they appear in the spreadsheet.
 # looks like PDF doc has different ones (it's from 2010)

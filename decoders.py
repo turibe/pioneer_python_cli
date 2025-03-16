@@ -353,7 +353,7 @@ def decode_ate(s: str) -> Optional[str]:
 
 
 def decode_vta(s: str) -> Optional[str]:
-    """placeholder"""
+    """placeholder function; VTA is undocumented in the reference spreadsheet"""
     if not s.startswith('VTA'):
         return None
     return None
